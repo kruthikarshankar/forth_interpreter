@@ -39,10 +39,10 @@ The FORTH program above leaves the stack containing [8, 9, 8]. Finally, ROT take
 7 8 9 ROT
 This leaves the stack containing 8 on the bottom, 9 in the middle, and 7 on top. Some more examples:
 
-FORTH Program	FORTH-style Stack Result (top on right)	Haskell-style Stack Result (list, top on left)
-11 22 33 SWAP DUP	11 33 22 22	[22, 22, 33, 11]
-11 22 33 ROT DROP	22 33	[33, 22]
-11 22 33 + -	-44	[-44]
+FORTH Program		FORTH-style Stack Result (top on right)			Haskell-style Stack Result (list, top on left)
+11 22 33 SWAP DUP	11 33 22 22										[22, 22, 33, 11]
+11 22 33 ROT DROP	22 33											[33, 22]
+11 22 33 + -		-44												[-44]
 
 An Interpreter in Haskell
 A Haskell function called interpretFORTHProgram with the following signature:
