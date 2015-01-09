@@ -108,8 +108,3 @@ Here's the stack notation for the word +:
 
 When there is more than one n, we number them n1, n2, n3, etc., consecutively. The numbers 1 and 2 do not refer to a position on the stack. Stack position is indicated by the order in which the items are written; the rightmost item on either side of the double-dash is the topmost item on the stack. For example, in the stack notation of +, the n2 is on top before the operation.
 
-You also may have noticed that all of the non-symbolic words in our subset of FORTH are all-uppercase. While most FORTH implementations are not case-sensitive, the language standard only requires implementations to recognize built-in words when they are in uppercase. For this assignment, you need only recognize upper-case versions of these words (and the reference implementation will not recognize alternative capitalization, either).
-
-Finally, what is that "Maybe" in the return type for the interpreter? It is another of Haskell's built-in types. A type Maybe a (in this case, it is Maybe [Int] where a = [Int]) is a type with values that can take on two forms: either the single value Nothing, or a value of the form Just val where val is some value of type a. It is commonly used when you have a function that may not produce a value for some inputs.
-
-In this case, we will use the result Nothing as a return value for the interpreter to indicate that the input string was not valid (e.g., contained unrecognized command words or forced a stack underflow), and use a value of the form Just stack where stack is some (possibly empty) list of Int values when no error occurred.
