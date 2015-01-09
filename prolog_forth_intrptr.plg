@@ -1,0 +1,553 @@
+/**
+ * Program 4, CS 5314, Fall 2014
+ *
+ * Author : Kruthika Rathinavel
+ * Date   : 12/5/2014
+ *
+ * FORTH Mini-Interpreter in Prolog
+ *
+ * This file is separated into two sections:
+ * Part I   : interpret_FORTH_program
+ * Part II  : Helper Functions for Interpreting FORTH Programs
+ * Part III : Helper Functions to interpret the different FORTH operands
+ *
+ */
+
+/*********************************************************************************/
+/****** Part I : interpret_FORTH_program *****************************************/
+/*********************************************************************************/
+ 
+/**
+ * interpret_FORTH_program(+ForthList : list, +ResultStack : list).
+ * interpret_FORTH_program(+ForthList : list, ?ResultStack : list).
+ *
+ * The 'interpret_FORTH_program' predicate takes two arguments - a list
+ * corresponding to the FORTH program to execute, and a list corresponding to 
+ * the contents of the resulting FORTH stack. The second argument is the result 
+ * of processing the FORTH program that was given in the first argument.
+ *
+ * @param ForthList The first a list containing the FORTH program to 
+ * execute
+ * @param ResultStack The second list containing the contents of the resulting
+ * FORTH stack.
+ *
+ * Examples:
+ *
+ * ?- interpret_FORTH_program([1,2,4,6,+,-],X).
+ * [X=[-8,1]]
+ *
+ * ?- interpret_FORTH_program([0,0,0,0,+,-],X).
+ * [X=[0,0]]
+ *
+ * ?- interpret_FORTH_program([0,0,0,0,*,*],X).
+ * [X=[0,0]]
+ *
+ * ?- interpret_FORTH_program([10,5,+,6,*,3,/],X).
+ * [X=[30]]
+ *
+ * ?- interpret_FORTH_program([11,22,-],[-11]).
+ * true
+ * 
+ * ?- interpret_FORTH_program([1,11,-10,-],X).
+ * [X = [21, 1]]
+ *
+ * ?- interpret_FORTH_program([1,2,swap],X).
+ * [X=[1,2]]
+ * 
+ * ?- interpret_FORTH_program([1,11,-10,/],X).
+ * [X = [-2, 1]]
+ *
+ * ?- interpret_FORTH_program([3,4,-,6,10,/],X).
+ * [X = [0, -1]]
+ *
+ * ?- interpret_FORTH_program([3, 6, 7, 2, '2dup', 2, 4, -10, mod, -19, '/mod', 8, /],X).
+ * [X = [0, -6, 2, 2, 7, 2, 7, 6, 3]]
+ *
+ * ?- interpret_FORTH_program([-1, 78, *, 9, 5, /, 34, mod, 3, 6 ,'/mod', swap, -1,or],X).
+ * [X = [-1, 0, 1, -78]]
+ *
+ * ?- interpret_FORTH_program([-1,-0,+],X).
+ * [X=[-1]]
+ *
+ * ?- interpret_FORTH_program([3,4,-,60,10,/,*],X).
+ * [X = [-6]]
+ *
+ * ?- interpret_FORTH_program([3,-],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([1,2,4,6,+,-,*],X).
+ * [X=[-8]]
+ *
+ * ?- interpret_FORTH_program([2,20,4,6,+,/,*],X).
+ * [X=[4]]
+ *
+ * ?- interpret_FORTH_program([1,2,4,6,+,'/mod'],X).
+ * [X = [0, 2, 1]]
+ *
+ * ?- interpret_FORTH_program([1,2,4,6,+,mod],X).
+ * [X = [2, 1]]
+ *
+ * ?- interpret_FORTH_program([1,2,4,6,+,=],X).
+ * [X = [0, 1]]
+ *
+ * ?- interpret_FORTH_program([1,2,4,6,+,>],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([1,2,10,<],X).
+ * [X = [-1, 1]]
+ * 
+ * ?- interpret_FORTH_program([1,11,10,<],X).
+ * [X = [0, 1]]
+ *
+ * ?- interpret_FORTH_program([1,2,10,swap],X).
+ * [X = [2, 10, 1]]
+ *
+ * ?- interpret_FORTH_program([1,2,/,4,-6,*],X).
+ * [X = [-24, 0]]
+ * 
+ * ?- interpret_FORTH_program([1,2,'/mod',4,-6,*],X).
+ * [X = [-24, 0, 1]]
+ *
+ * ?- interpret_FORTH_program([1,2,'/mod',4,-6,swap],X).
+ * [X = [4, -6, 0, 1]]
+ *
+ * ?- interpret_FORTH_program([1,2,'/mod',4,-6,'2swap'],X).
+ * [X = [0, 1, -6, 4]]
+ *
+ * ?- interpret_FORTH_program([1,2,'/mod',4,-6,'2swap',dup],X).
+ * [X = [0, 0, 1, -6, 4]]
+ *
+ * ?- interpret_FORTH_program([1,2,4,-6,'2swap'],X).
+ * [X = [2, 1, -6, 4]]
+ *
+ * ?- interpret_FORTH_program([2,1,-6,4,rot],X).
+ * [X = [1, 4, -6, 2]]
+ * 
+ * ?- interpret_FORTH_program([2,1,-6,4,drop],X).
+ * [X = [-6, 1, 2]]
+ *
+ * ?- interpret_FORTH_program([2,1,-6,4,over],X).
+ * [X = [-6, 4, -6, 1, 2]]
+ *
+ * ?- interpret_FORTH_program([-6,over],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([2,1,-6,4,'2dup'],X).
+ * [X = [4, -6, 4, -6, 1, 2]]
+ *
+ * ?- interpret_FORTH_program([2,1,-6,4,'2swap'],X).
+ * [X = [1, 2, 4, -6]]
+ *
+ * ?- interpret_FORTH_program([2,1,-6,4,'2over'],X).
+ * [X = [1, 2, 4, -6, 1, 2]]
+ *
+ * ?- interpret_FORTH_program([2,1,-6,4,'2drop'],X).
+ * [X = [1, 2]]
+ * 
+ * ?- interpret_FORTH_program([4,'2drop'],X).
+ * false
+ * 
+ * ?- interpret_FORTH_program([2,1,'2drop'],X).
+ * [X=[]]
+ *
+ * ?- interpret_FORTH_program([2,'2drop'],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([2,1,-6,'2over'],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([2,1,-6,-6],X).
+ * [X = [-6, -6, 1, 2]]
+ *
+ * ?- interpret_FORTH_program([2,1,-6,-6,=],X).
+ * [X = [-1, 1, 2]]
+ *
+ * ?- interpret_FORTH_program([2,1,-6,-6,and],X).
+ * [X = [-1, 1, 2]]
+ *
+ * ?- interpret_FORTH_program([1,0,'or'],X).
+ * [X = [-1]]
+ *
+ * ?- interpret_FORTH_program([0,1,'or'],X).
+ * [X = [-1]]
+ *
+ * ?- interpret_FORTH_program([2,1,-6,0,and],X).
+ * [X = [0, 1, 2]]
+ *
+ * ?- interpret_FORTH_program([2,1,0,-6,and],X).
+ * [X = [0,1,2]]
+ *
+ * ?- interpret_FORTH_program([2,1,0,0,'or'],X).
+ * [X = [0,1,2]]
+ *
+ * ?- interpret_FORTH_program([or,2,1,0,0,'or'],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([3,0,*,dup,3],X).
+ * [X=[3,0,0]]
+ *
+ * ?- interpret_FORTH_program([-3,-1,*,5],X).
+ * [X=[5,3]]
+ *
+ * ?- interpret_FORTH_program([3,-5,mod],X).
+ * [X=[-2]]
+ *
+ * ?- interpret_FORTH_program([3,'dup',mod],X).
+ * [X = [0]]
+ *
+ * ?- interpret_FORTH_program([],X).
+ * [X = []]
+ *
+ * ?- interpret_FORTH_program([5,0,mod],X).
+ * false
+ * 
+ * ?- interpret_FORTH_program([3 ,4 ,5, 6, 10, +],X).
+ * [X=[16,5,4,3]]
+ *
+ * ?- interpret_FORTH_program([5,0,/],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([3 ,4, 5, 12, 18, 7, <, '/mod'],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([7, +, 2, 8, -, 8, -2, '2over', 5, 6, -3, 12 ,'2drop'],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([3, 6, swap, 7, +, 2, '2dup', 2, dup, 4, -10, mod, -19, '/mod', 8, /, -],X).
+ * [X = [-6, 2, 2, 2, 10, 2, 10, 6]]
+ *
+ * ?- interpret_FORTH_program([dup,7,7.7],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([3, 6, swap, 7, +, 2, '2dup', 2, dup, 4, -10, mod, -19, '/mod', 8, /, -, '2swap', '2over', 'rot'],X).
+ * [X = [2, -6, 2, 2, -6, 2, 10, 2, 10,6]]
+ *
+ * ?- interpret_FORTH_program([1,0,'/mod'],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([1,'swap'],X).
+ * false
+ *
+ * ?- interpret_FORTH_program(['dup'],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([1,0,'2over'],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([1,0,'2drop'],X).
+ * [X=[]]
+ *
+ * ?- interpret_FORTH_program([1,'rot'],X).
+ * false
+ * 
+ * ?- interpret_FORTH_program([1,'over'],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([1,'and'],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([1,'or'],X).
+ * false
+ *
+ * ?- interpret_FORTH_program([1,/,2,*],X).
+ * false
+**/
+interpret_FORTH_program(Arr,Stack) :- processForth(Arr,[],Stack).
+
+/*********************************************************************************/
+/****** Part II: Helper Functions for Interpreting FORTH Programs ****************/
+/*********************************************************************************/
+
+/**
+ * processForth(+ForthList : list, +AccumulatedList : list, +ResultStack : list).
+ * processForth(+ForthList : list, +AccumulatedList : list, ?ResultStack : list).
+ *
+ * The 'processForth' predicate takes three arguments - a list
+ * corresponding to the FORTH program to execute, a temporary stack which is 
+ * initially empty which is used to accumulate the values before processing 
+ * operators, and a list corresponding to the contents of the resulting
+ * FORTH stack. It accumulates the FORTH program stack, performs the operations 
+ *
+ * @param ForthList The first a list containing the FORTH program to 
+ * execute
+ * @param AccumulatedList The second list which is used as a temporary stack to 
+ * push and process FORTH operations.
+ * @param ResultStack The second list containing the contents of the resulting
+ * FORTH stack.
+ * 
+ * Examples:
+ *
+ * ?- processForth([],[3,4,5],X).
+ * [X = [3, 4, 5]]
+ *
+ * ?- processForth([3,4,5,+],[],X).
+ * [X = [9, 3]]
+ *
+ * ?- processForth([],[],X).
+ * [X = []]
+ *
+ */
+processForth([],A,A).
+processForth([H|T],A,R) :- processForthOperator(H,A,Z),processForth(T,Z,R).
+
+/*********************************************************************************/
+/****** Part III : Helper Functions to interpret the different FORTH operands ****/
+/*********************************************************************************/
+
+/**
+ * processForthOperator(+FORTHOperator : var, +ForthList : list, +ResultStack : list).
+ * processForthOperator(+FORTHOperator : var, +ForthList : list, ?ResultStack : list).
+ *
+ * The 'processForthOperator' predicate takes three arguments - a variable
+ * corresponding to the FORTH operator, a stack which is 
+ * FORTH list of operands, and a result stack which is the resultant of performing 
+ * the FORTH operation on the corresponding operands.
+ *
+ * @param FORTHOperator The first variable which is the FORTH operator to be evaluated.
+ * @param ForthList The second is a list which the current stack of operands.
+ * @param ResultStack The third is a list containing the contents of the resulting
+ * stack after the operation.
+ * 
+ * Examples:
+ *
+ * ?- processForthOperator('+',[5,4,3],X).
+ * [X = [9, 3]]
+ *
+ * ?- processForthOperator('-',[5,4,3],X).
+ * [X = [-1, 3]]
+ *
+ * ?- processForthOperator('*',[5,4,3],X).
+ * [X = [20, 3]]
+ *
+ * ?- processForthOperator('/',[5,4,3],X).
+ * [X = [0, 3]]
+ *
+ * ?- processForthOperator('/mod',[5,4,3],X).
+ * [X = [0, 4, 3]]
+ *
+ * ?- processForthOperator('mod',[5,4,3],X).
+ * [X = [4, 3]]
+ *
+ * ?- processForthOperator('=',[5,4,3],X).
+ * [X = [0, 3]]
+ * 
+ * ?- processForthOperator('<',[5,4,3],X).
+ * [X = [-1, 3]]
+ * 
+ * ?- processForthOperator('and',[5,4,3],X).
+ * [X = [-1, 3]]
+ *
+ * ?- processForthOperator('or',[5,4,3],X). 
+ * [X = [-1, 3]]
+ *
+ * ?- processForthOperator('swap',[5,4,3],X).
+ * [X = [4, 5, 3]]
+ *
+ * ?- processForthOperator('dup',[5,4,3],X).
+ * [X = [5, 5, 4, 3]]
+ *
+ * ?- processForthOperator('over',[5,4,3],X).
+ * [X = [4, 5, 4, 3]]
+ *
+ * ?- processForthOperator('rot',[5,4,3],X).
+ * [X = [3, 5, 4]]
+ * 
+ * ?- processForthOperator('drop',[5,4,3],X).
+ * [X = [4, 3]]
+ *
+ * ?- processForthOperator('2drop',[5,4,3],X).
+ * [X = [3]]
+ * 
+ * ?- processForthOperator('2dup',[5,4,3],X).
+ * [X = [5, 4, 5, 4, 3]]
+ *
+ * ?- processForthOperator('2over',[5,4,3,2],X).
+ * [X = [3, 2, 5, 4, 3, 2]]
+ *
+ * ?- processForthOperator('2drop',[5,4,3,2],X).
+ * [X = [3, 2]]
+ *
+ */
+processForthOperator('+',[X,Y|Rest],[Z|Rest]) :- Z is (Y+X).
+processForthOperator('-',[X,Y|Rest],[Z|Rest]) :- Z is (Y-X).
+processForthOperator('*',[X,Y|Rest],[Z|Rest]) :- Z is (Y*X).
+processForthOperator('/',[X,Y|Rest],[Z|Rest]) :- div(Y,X,Z).
+
+processForthOperator('/mod',[X,Y|Rest],[Q,R|Rest]) :- div(Y,X,Q),mod(Y,X,R).
+processForthOperator('mod',[X,Y|Rest],[Z|Rest]) :- mod(Y,X,Z).
+processForthOperator('=',[X,Y|Rest],[Z|Rest]) :- equals(Z,X,Y).
+processForthOperator('<',[X,Y|Rest],[Z|Rest]) :- lessthan(Z,Y,X).
+
+processForthOperator('and',[X,Y|Rest],[Z|Rest]) :- and(Z,Y,X).
+processForthOperator('or',[X,Y|Rest],[Z|Rest]) :- or(Z,Y,X).
+
+processForthOperator('swap',[X,Y|Rest],[Y,X|Rest]).
+processForthOperator('dup',[X|Rest],[X,X|Rest]).
+processForthOperator('over',[X,Y|Rest],[Y,X,Y|Rest]).
+processForthOperator('rot',[X,Y,Z|Rest],[Z,X,Y|Rest]).
+processForthOperator('drop',[_|Rest],Rest).
+
+processForthOperator('2swap',[X1,X2,X3,X4|Rest],[X3,X4,X1,X2|Rest]).
+processForthOperator('2dup',[X,Y|Rest],[X,Y,X,Y|Rest]).
+processForthOperator('2over',[X1,X2,X3,X4|Rest],[X3,X4,X1,X2,X3,X4|Rest]).
+processForthOperator('2drop',[_,_|Rest],Rest).
+
+processForthOperator(X,Rest,[X|Rest]) :- number(X).
+
+
+/**
+ * equals(+Result : int, +Operand1 : int, +Operand2 : int).
+ * equals(+Result : int, +Operand1 : int, ?Operand2 : int).
+ *
+ * The 'equals' predicate takes three arguments - all integers.
+ * The first argument is the result of the equals function.
+ * The second argument is the first operand which has to be tested for 
+ * equality with the second argument which is also an integer. This predicate 
+ * returns 0 if the two operands are not equal and returns -1 if the operands
+ * are equal.
+ *
+ * @param Result The first is the result of the equals function - an integer.
+ * @param Operand1 The second argument - an integer - to be compared with 
+ * the third argument.
+ * @param Operand2 The third argument - an integer - to be compared with 
+ * the second argument.
+ * 
+ * Examples:
+ *
+ * ?- equals(-1,4,4).
+ * true
+ *
+ * ?- equals(0,4,5).
+ * true
+ */
+equals(-1,X,Y) :- X=Y,!.
+equals(0,_,_).
+
+/**
+ * lessthan(+Result : int, +Operand1 : int, +Operand2 : int).
+ * lessthan(+Result : int, +Operand1 : int, ?Operand2 : int).
+ *
+ * The 'lessthan' predicate takes three arguments - all integers.
+ * The first argument is the result of the less than function.
+ * The second argument is the first operand which has to be compared with the 
+ * third argument. This predicate 
+ * returns 0 if the first operand is less than the second and returns -1 otherwise.
+ *
+ * @param Result The first is the result of the lessthan function - an integer.
+ * @param Operand1 The second argument - an integer - to be compared with 
+ * the third argument.
+ * @param Operand2 The third argument - an integer - to be compared with 
+ * the second argument.
+ * 
+ * Examples:
+ *
+ * ?- lessthan(-1,4,4).
+ * false
+ *
+ * ?- lessthan(-1,2,4).
+ * true
+ */
+lessthan(-1,X,Y) :- X<Y,!.
+lessthan(0,X,Y) :- not(X<Y).
+
+/**
+ * and(+Result : int, +Operand1 : int, +Operand2 : int).
+ * and(+Result : int, +Operand1 : int, ?Operand2 : int).
+ *
+ * The 'and' predicate takes three arguments - all integers.
+ * The first argument is the result of the 'and' function.
+ * The second argument is the first operand for the AND operation.
+ * The third argument is the second operand for the AND operation. This predicate 
+ * returns 0 if the first operand or the second operand is 0 or both operands are 0
+ * and returns -1 otherwise.
+ *
+ * @param Result The first is the result of the and function - an integer.
+ * @param Operand1 The second argument - an integer - first operand of AND operation.
+ * @param Operand2 The third argument - an integer -  second operand of AND operation.
+ * 
+ * Examples:
+ *
+ * ?- and(-1,0,4).
+ * true
+ *
+ * ?- and(X,0,0).
+ * [X = 0]
+ */
+and(0,X,_) :- X is 0,!.
+and(0,_,Y) :- Y is 0,!.
+and(-1,_,_).
+
+/**
+ * or(+Result : int, +Operand1 : int, +Operand2 : int).
+ * or(+Result : int, +Operand1 : int, ?Operand2 : int).
+ *
+ * The 'or' predicate takes three arguments - all integers.
+ * The first argument is the result of the 'or' function.
+ * The second argument is the first operand for the OR operation.
+ * The third argument is the second operand for the OR operation. This predicate 
+ * returns 0 if both operands are 0 and returns -1 otherwise.
+ *
+ * @param Result The first is the result of the or function - an integer.
+ * @param Operand1 The second argument - an integer - first operand of OR operation.
+ * @param Operand2 The third argument - an integer -  second operand of OR operation.
+ * 
+ * Examples:
+ *
+ * ?- or(X,0,0).
+ * [X = 0]
+ *
+ * ?- or(X,0,9).
+ * [X = -1]
+ */
+or(0,X,Y) :- X is 0,Y is 0,!.
+or(-1,_,_).
+
+/**
+ * div(+Operand1 : int, +Operand2 : int, +Result : int).
+ * div(+Operand1 : int, +Operand2 : int, ?Result : int).
+ *
+ * The 'div' predicate takes three arguments - all integers.
+ * The third argument is the result of the 'division' function.
+ * The first argument is the first operand for the division operation.
+ * The second argument is the second operand for the division operation. This predicate 
+ * returns false is the divisor is 0 and returns the result of the division otherwise.
+ *
+ * @param Operand1 The first argument - an integer - first operand of division operation.
+ * @param Operand2 The second argument - an integer -  second operand of division operation.
+ * @param Result The third is the result of the div function - an integer.
+ * 
+ * Examples:
+ *
+ * ?- div(12,8,X).
+ * [X=1]
+ *
+ * ?- div(3,0,X).
+ * false
+ */
+div(Y,X,Z) :- X > 0, Z is div(Y,X).
+div(Y,X,Z) :- X < 0, Z is div(Y,X).
+
+/**
+ * mod(+Operand1 : int, +Operand2 : int, +Result : int).
+ * mod(+Operand1 : int, +Operand2 : int, ?Result : int).
+ *
+ * The 'mod' predicate takes three arguments - all integers.
+ * The third argument is the result of the 'modulus' function.
+ * The first argument is the first operand for the modulus operation.
+ * The second argument is the second operand for the modulus operation. This predicate 
+ * returns false is the divisor is 0 and returns the result of the modulus otherwise.
+ *
+ * @param Operand1 The first argument - an integer - first operand of modulus operation.
+ * @param Operand2 The second argument - an integer -  second operand of modulus operation.
+ * @param Result The third is the result of the modulus function - an integer.
+ * 
+ * Examples:
+ *
+ * ?- mod(12,8,X).
+ * [X=4]
+ *
+ * ?- mod(3,0,X).
+ * false
+ */
+mod(Y,X,Z) :- X > 0, Z is mod(Y,X).
+mod(Y,X,Z) :- X < 0, Z is mod(Y,X).
