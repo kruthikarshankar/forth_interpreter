@@ -56,25 +56,43 @@ Since we are using Haskell and are representing the stack using a list, We will 
 Besides integer literals, your interpreter must support all the FORTH words in the following table:
 
 
-+ 	  	( n1 n2 -- sum )	  					Adds (n1 + n2).
--	    ( n1 n2 -- diff )	  					Subtracts (n1 - n2).
-*	    ( n1 n2 -- prod )	  					Multiplies (n1 * n2).
-/	    ( n1 n2 -- quot )	  					Divides (n1 / n2), using integer division (truncates).
-/MOD	( n1 n2 -- rem quot )					Divides. Returns the remainder and quotient.
-MOD		( n1 n2 -- rem )						Returns the remainder from division.
-=		( n1 n2 -- equal )						Compares for equality (n1 == n2). Indicates false with the value zero, and true with the value -1.
-<		( n1 n2 -- less )						Compares using "less than" (n1 < n2). Indicates false with the value zero, and true with the value -1.
-AND		( n1 n2 -- and )						Combines two conditions using logical "and", where zero is false and non-zero is true.
-OR		( n1 n2 -- or )							Combines two conditions using logical "OR", where zero is false and non-zero is true.
-SWAP	( n1 n2 -- n2 n1 )						Reverses the top two stack items.
-DUP		( n -- n n )							Duplicates the top stack item.
-OVER	( n1 n2 -- n1 n2 n1 )					Makes a copy of the second item and pushes it on top.
-ROT		( n1 n2 n3 -- n2 n3 n1 )				Rotates the third item to the top.
-DROP	( n -- )								Discards the top stack item.
-2SWAP	( n1 n2 n3 n4 -- n3 n4 n1 n2 )			Reverses the top two pairs of numbers.
-2DUP	( n1 n2 -- n1 n2 n1 n2 )				Duplicates the top pair of numbers.
-2OVER	( n1 n2 n3 n4 -- n1 n2 n3 n4 n1 n2 )	Makes a copy of the second pair of numbers and pushes it on top.
-2DROP	( n1 n2 -- )							Discards the top pair of numbers.
++ -->	( n1 n2 -- sum )-->	Adds (n1 + n2).
+
+-	-->    ( n1 n2 -- diff )	--> 	Subtracts (n1 - n2).
+
+*	-->    ( n1 n2 -- prod )	-->		Multiplies (n1 * n2).
+*	
+/	-->  ( n1 n2 -- quot )	 -->	Divides (n1 / n2), using integer division (truncates).
+
+/MOD   --> 	( n1 n2 -- rem quot )	-->		Divides. Returns the remainder and quotient.
+
+MOD	 --> 	( n1 n2 -- rem )	--> 	Returns the remainder from division.
+
+=	-->  ( n1 n2 -- equal )	-->	Compares for equality (n1 == n2). Indicates false with the value zero, and true with the value -1.
+
+<	-->	 ( n1 n2 -- less )	--> 	Compares using "less than" (n1 < n2). Indicates false with the value zero, and true with the value -1.
+
+AND	--> 	( n1 n2 -- and )	--> 	Combines two conditions using logical "and", where zero is false and non-zero is true.
+
+OR		-->		( n1 n2 -- or ) 	--> 	Combines two conditions using logical "OR", where zero is false and non-zero is true.
+
+SWAP  -->	( n1 n2 -- n2 n1 )	-->	Reverses the top two stack items.
+
+DUP	-->	( n -- n n )	-->	Duplicates the top stack item.
+
+OVER 	-->		( n1 n2 -- n1 n2 n1 )	-->	Makes a copy of the second item and pushes it on top.
+
+ROT		-->		( n1 n2 n3 -- n2 n3 n1 )	-->	Rotates the third item to the top.
+
+DROP	( n -- )	-->	Discards the top stack item.
+
+2SWAP -->	( n1 n2 n3 n4 -- n3 n4 n1 n2 )	-->		Reverses the top two pairs of numbers.
+
+2DUP -->	( n1 n2 -- n1 n2 n1 n2 )	-->	Duplicates the top pair of numbers.
+
+2OVER -->	( n1 n2 n3 n4 -- n1 n2 n3 n4 n1 n2 ) -->	Makes a copy of the second pair of numbers and pushes it on top.
+
+2DROP -->	( n1 n2 -- )	-->	Discards the top pair of numbers.
 
 In FORTH, It is common for one to describe the "signature" of a word (an operation) in terms of how many values it pops off the stack, and what new it pushes onto the stack in the basic form:
 
