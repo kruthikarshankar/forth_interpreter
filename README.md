@@ -56,13 +56,13 @@ Since we are using Haskell and are representing the stack using a list, We will 
 Besides integer literals, your interpreter must support all the FORTH words in the following table:
 
 
-  + -->	( n1 n2 -- sum )-->	Adds (n1 + n2).
+\+ -->	( n1 n2 -- sum )-->	Adds (n1 + n2).
 
-  -	-->    ( n1 n2 -- diff )	--> 	Subtracts (n1 - n2).
+\-	-->    ( n1 n2 -- diff )	--> 	Subtracts (n1 - n2).
 
-  *	-->    ( n1 n2 -- prod )	-->		Multiplies (n1 * n2).
-	
- /	-->  ( n1 n2 -- quot )	 -->	Divides (n1 / n2), using integer division (truncates).
+\*	-->    ( n1 n2 -- prod )	-->		Multiplies (n1 * n2).
+
+/	-->  ( n1 n2 -- quot )	 -->	Divides (n1 / n2), using integer division (truncates).
 
 /MOD   --> 	( n1 n2 -- rem quot )	-->		Divides. Returns the remainder and quotient.
 
